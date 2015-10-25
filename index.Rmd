@@ -1,0 +1,113 @@
+---
+title       : Image Classification
+subtitle    : Model evaluation
+author      : Andrey
+job         : Data Scientist
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : [bootstrap]            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+## Project description
+
+Classification model was created to classify images - bad/good automatically. 
+<br><br>
+This application helps to assess model performance. It contains results of 405 models. First result is based on 2 images in training set and next results gets by incrementing number of images by 1.
+<br><br>
+Final model result based on 406 images in training set.
+
+
+--- .class #id 
+
+## Performance Metrics of final model
+
+```{r, echo = FALSE, render=FALSE}
+# Home dir
+main.dir <- "G:/_R/Image Classification/shiny"
+
+# Data SubDir
+data.dir <- "data"
+
+# Results file name
+results.file <- "Results.RData"
+
+# Model performance file name
+perf.file <- "Perf.RData"
+
+# Load data
+Results <- readRDS(file.path(main.dir, data.dir, results.file))
+Perf <- readRDS(file.path(main.dir, data.dir, perf.file))
+
+library(shiny)
+library(ggplot2)
+library(dplyr)
+```        
+
+
+```{r, echo = FALSE}
+
+cat('Accuracy: ', Results$accuracy.test[405])
+cat('TP: ', Results$TP[405], ' FP: ', Results$FP[405], ' FN: ', Results$FN[405], ' TN: ',  Results$TN[405], '\n')
+cat('Precision: ', round(Results$precision[405], 4), ' Recall: ', round(Results$recall[405], 4), ' F1 Score: ', round(Results$F1[405], 4), '\n')
+
+
+```   
+
+--- .class #id 
+
+## Learning curves
+
+By plotting learning curves we can assess how does the accuracy of a learning method change as a function of the training set size
+
+```{r, echo = FALSE}
+    
+                        g <- ggplot(Results, aes(x=N))
+                        g <- g + geom_line(aes(y=accuracy.test), size = 0.5, color = "blue")
+                        g <- g + geom_line(aes(y=accuracy.train), size = 0.5, color = "blue")
+                        g <- g + geom_smooth(aes(y=accuracy.test), size = 1, method = "lm",  color = "blue")
+                        g <- g + geom_point(aes(y=accuracy.train), color = "blue")
+                        g <- g + geom_point(aes(y=accuracy.test), color = "blue")
+                        g <- g + theme_bw()
+                        g <- g + coord_fixed(ratio = 600)
+                        g <- g + theme(plot.title = element_text(size = rel(2)))
+                        g <- g + theme(axis.text = element_text(size = rel(1)))
+                        g <- g + theme(axis.title = element_text(size = rel(2)))
+                        g <- g + xlab("Size of the Training set")
+                        g <- g + ylab("Accuracy")
+                        g <- g + ggtitle("Learning Curves")
+                        g
+
+```   
+
+--- .class #id 
+
+## Summary
+
+This plot is showing absolute difference Good and Bad probabilities. If it small them we can conclude that model not sure about whcih class should be for that image.
+<br><br>
+Additionally we can see which images was classified incorrectly as False Positives (FP) and False Negatives (FN)
+
+```{r, echo = FALSE}
+                        g <- ggplot(filter(Perf, iter == 405), aes(x = as.factor(img.num), y = Diff))
+                        g <- g + geom_bar(aes(fill = Type), stat = 'identity', colour = 'black')
+                        g <- g + scale_fill_manual(values=c("maroon", "red", "green", "lightgreen"))
+                        g <- g + scale_y_sqrt()
+                        g <- g + theme_bw()
+                        g <- g + theme(plot.title = element_text(size = rel(2)))
+                        g <- g + theme(axis.text = element_text(size = rel(1)))
+                        g <- g + theme(axis.title = element_text(size = rel(1)))
+                        g <- g + xlab("Images from the Testing set")
+                        g <- g + ylab("Difference = Absolute(Prob Good - Prob Bad)")
+                        g <- g + ggtitle("Show image difference")
+                        g <- g + coord_fixed(ratio = 50)
+                        g
+
+
+
+```        
+
+
+
